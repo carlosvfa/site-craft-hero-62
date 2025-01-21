@@ -35,12 +35,16 @@ export const createGithubRepository = async (params: CreateRepoParams) => {
 
     const repo = await response.json();
 
-    // Save repository info in Supabase
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError) throw new Error('Failed to get user');
+
+    // Save repository info in Supabase with user_id
     const { error: dbError } = await supabase
       .from('github_repositories')
       .insert({
         repo_name: repo.name,
         repo_url: repo.html_url,
+        user_id: user.id
       });
 
     if (dbError) throw new Error('Failed to save repository info');
