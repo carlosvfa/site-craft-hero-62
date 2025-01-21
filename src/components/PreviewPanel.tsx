@@ -17,6 +17,27 @@ export const PreviewPanel = () => {
   return (
     <div className="h-full flex flex-col bg-white">
       <div className="border-b border-gray-200 p-2 flex justify-between items-center">
+        {/* Lado esquerdo: Dropdown */}
+        <div className="flex items-center space-x-4">
+          {/* Dropdown de páginas */}
+          <Select
+            value={currentPage}
+            onValueChange={(value) => setCurrentPage(value)}
+          >
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Selecione uma página" />
+            </SelectTrigger>
+            <SelectContent>
+              {pages.map((page) => (
+                <SelectItem key={page} value={page}>
+                  {page}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Lado direito: Botões Mobile e Reiniciar */}
         <div className="flex items-center space-x-2">
           <Button
             variant="ghost"
@@ -32,26 +53,17 @@ export const PreviewPanel = () => {
             Reiniciar
           </Button>
         </div>
-        <div className="flex items-center space-x-2">
-          <Select
-            value={currentPage}
-            onValueChange={(value) => setCurrentPage(value)}
-          >
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Selecione uma página" />
-            </SelectTrigger>
-            <SelectContent>
-              {pages.map((page) => (
-                <SelectItem key={page} value={page}>
-                  preview--site-craft-hero.lovable.app/{page}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
       </div>
-      <div className={`flex-1 overflow-y-auto bg-gray-50 ${isMobile ? 'flex justify-center' : ''}`}>
-        <div className={`min-h-[calc(100vh-8rem)] ${isMobile ? 'w-[375px] border-x border-gray-200' : 'w-full'}`}>
+      <div
+        className={`flex-1 overflow-y-auto bg-gray-50 ${
+          isMobile ? "flex justify-center" : ""
+        }`}
+      >
+        <div
+          className={`min-h-[calc(100vh-8rem)] ${
+            isMobile ? "w-[375px] border-x border-gray-200" : "w-full"
+          }`}
+        >
           <div className="flex items-center justify-center h-full text-gray-500">
             Área de Visualização
           </div>
