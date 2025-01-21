@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { FileText, Settings } from "lucide-react";
+import { Settings, Github, Cloud, Zap, Database } from "lucide-react";
 
 export const Navbar = () => {
   return (
@@ -7,21 +7,29 @@ export const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
-            <FileText className="h-8 w-8 text-primary" />
-            <span className="ml-2 text-xl font-semibold text-primary-dark">
+            <span className="text-xl font-semibold text-gray-900">
               Website Builder AI
             </span>
           </div>
-          <div className="flex items-center space-x-4">
-            <Button variant="ghost" className="text-gray-600 hover:text-primary">
-              About
+          <div className="flex items-center space-x-2">
+            <Button variant="ghost" size="sm" className="text-gray-600">
+              <Database className="h-4 w-4" />
+              Supabase
             </Button>
-            <Button variant="ghost" className="text-gray-600 hover:text-primary">
-              <Settings className="h-4 w-4 mr-2" />
-              Tools
+            <Button variant="ghost" size="sm" className="text-gray-600">
+              <Github className="h-4 w-4" />
+              Github
             </Button>
-            <Button className="bg-primary hover:bg-primary-hover text-white">
-              Get Started
+            <Button variant="ghost" size="sm" className="text-gray-600">
+              <Zap className="h-4 w-4" />
+              Publish
+            </Button>
+            <Button variant="ghost" size="sm" className="text-gray-600">
+              <Cloud className="h-4 w-4" />
+              Deploy
+            </Button>
+            <Button variant="ghost" size="sm" className="text-gray-600">
+              <Settings className="h-4 w-4" />
             </Button>
           </div>
         </div>
