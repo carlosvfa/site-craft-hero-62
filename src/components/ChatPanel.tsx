@@ -36,14 +36,14 @@ export const ChatPanel = () => {
 
   const createGithubRepository = async (name: string, description?: string) => {
     const octokit = new Octokit({
-      auth: import.meta.env.VITE_GITHUB_TOKEN, // Token do GitHub configurado no .env
+      auth: import.meta.env.VITE_GITHUB_TOKEN, // Certifique-se de que o token está configurado no .env
     });
 
     try {
       const response = await octokit.repos.createForAuthenticatedUser({
         name,
         description: description || "Repositório criado pelo Construtor de Sites AI",
-        private: false, // Altere para true se quiser repositórios privados
+        private: false, // Defina como true se quiser repositórios privados
       });
 
       toast({
@@ -66,8 +66,23 @@ export const ChatPanel = () => {
   const handleCreateRepository = async (repoName: string, description?: string) => {
     try {
       await createGithubRepository(repoName, description);
+      setMensagens((prev) => [
+        ...prev,
+        {
+          type: "ai",
+          content: `Pronto! O repositório "${repoName}" foi criado com sucesso no GitHub com a descrição: "${description || "Sem descrição"}".`,
+          timestamp: Date.now(),
+        },
+      ]);
     } catch (error) {
-      console.error("Erro no handleCreateRepository:", error);
+      setMensagens((prev) => [
+        ...prev,
+        {
+          type: "ai",
+          content: "Houve um problema ao tentar criar o repositório. Verifique as configurações e tente novamente.",
+          timestamp: Date.now(),
+        },
+      ]);
     }
   };
 
@@ -88,37 +103,7 @@ export const ChatPanel = () => {
     setEstaCarregando(true);
 
     try {
-      const resposta = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: "gpt-4",
-          messages: [
-            {
-              role: "system",
-              content:
-                "Você é BOB, um assistente de IA dedicado ao desenvolvimento de aplicativos e sites profissionais. Você pode criar e gerenciar repositórios no GitHub. Quando o usuário pedir para criar um repositório, extraia o nome e a descrição da mensagem e use a função handleCreateRepository.",
-            },
-            ...mensagens.map((msg) => ({
-              role: msg.type === "user" ? "user" : "assistant",
-              content: msg.content,
-            })),
-            { role: "user", content: mensagemDoUsuario },
-          ],
-        }),
-      });
-
-      if (!resposta.ok) {
-        throw new Error("Falha ao obter resposta da IA");
-      }
-
-      const dados = await resposta.json();
-      const respostaDaIA = dados.choices[0].message.content;
-
-      // Verifica se a mensagem contém um pedido para criar um repositório
+      // Verifica se o usuário pediu para criar um repositório
       if (
         mensagemDoUsuario.toLowerCase().includes("criar repositório") ||
         mensagemDoUsuario.toLowerCase().includes("criar repo")
@@ -139,15 +124,46 @@ export const ChatPanel = () => {
             },
           ]);
         }
+      } else {
+        // Envia para o OpenAI para outras interações
+        const resposta = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
+          },
+          body: JSON.stringify({
+            model: "gpt-4",
+            messages: [
+              {
+                role: "system",
+                content:
+                  "Você é BOB, um assistente de IA dedicado ao desenvolvimento de aplicativos e sites profissionais. Você pode criar e gerenciar repositórios no GitHub. Quando o usuário pedir para criar um repositório, extraia o nome e a descrição da mensagem e use a função handleCreateRepository.",
+              },
+              ...mensagens.map((msg) => ({
+                role: msg.type === "user" ? "user" : "assistant",
+                content: msg.content,
+              })),
+              { role: "user", content: mensagemDoUsuario },
+            ],
+          }),
+        });
+
+        if (!resposta.ok) {
+          throw new Error("Falha ao obter resposta da IA");
+        }
+
+        const dados = await resposta.json();
+        const respostaDaIA = dados.choices[0].message.content;
+
+        const novaMensagemIA = {
+          type: "ai" as const,
+          content: respostaDaIA,
+          timestamp: Date.now(),
+        };
+
+        setMensagens((prev) => [...prev, novaMensagemIA]);
       }
-
-      const novaMensagemIA = {
-        type: "ai" as const,
-        content: respostaDaIA,
-        timestamp: Date.now(),
-      };
-
-      setMensagens((prev) => [...prev, novaMensagemIA]);
     } catch (erro) {
       toast({
         title: "Erro",
