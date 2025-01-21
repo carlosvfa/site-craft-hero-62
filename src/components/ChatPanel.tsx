@@ -2,7 +2,7 @@ import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 
 interface Message {
@@ -13,6 +13,7 @@ interface Message {
 export const ChatPanel = () => {
   const [entrada, setEntrada] = useState("");
   const [estaCarregando, setEstaCarregando] = useState(false);
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem("openai_api_key") || "");
   const { toast } = useToast();
   const [mensagens, setMensagens] = useState<Message[]>([
     {
@@ -21,9 +22,24 @@ export const ChatPanel = () => {
     },
   ]);
 
+  useEffect(() => {
+    if (apiKey) {
+      localStorage.setItem("openai_api_key", apiKey);
+    }
+  }, [apiKey]);
+
   const enviarMensagem = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!entrada.trim() || estaCarregando) return;
+
+    if (!apiKey) {
+      toast({
+        title: "API Key necessária",
+        description: "Por favor, insira sua chave API do OpenAI primeiro.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     const mensagemDoUsuario = entrada.trim();
     setEntrada("");
@@ -35,7 +51,7 @@ export const ChatPanel = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+          Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
           model: "gpt-4-1106-preview",
@@ -82,6 +98,18 @@ export const ChatPanel = () => {
         </TabsList>
         
         <TabsContent value="chat" className="flex-1 flex flex-col">
+          {!apiKey && (
+            <div className="p-4 bg-yellow-50 border-b border-yellow-200">
+              <input
+                type="password"
+                placeholder="Cole sua OpenAI API Key aqui"
+                className="w-full p-2 border border-yellow-300 rounded"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+              />
+            </div>
+          )}
+          
           <ScrollArea className="flex-1 p-4">
             <div className="space-y-4">
               {mensagens.map((mensagem, index) => (
