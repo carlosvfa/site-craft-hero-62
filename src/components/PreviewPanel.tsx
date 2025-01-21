@@ -11,21 +11,25 @@ import {
 
 export const PreviewPanel = () => {
   const [isMobile, setIsMobile] = useState(false);
-  const [currentPage, setCurrentPage] = useState("index");
-  const pages = ["index", "about", "contact"]; // Exemplo de páginas
+  const [currentPage, setCurrentPage] = useState(""); // Página selecionada
+  const pages = ["/index", "/about", "/contact"]; // Páginas disponíveis
 
   return (
     <div className="h-full flex flex-col bg-white">
       <div className="border-b border-gray-200 p-2 flex justify-between items-center">
-        {/* Lado esquerdo: Dropdown */}
+        {/* Lado esquerdo: Nome do projeto e seletor */}
         <div className="flex items-center space-x-4">
-          {/* Dropdown de páginas */}
+          {/* Nome do projeto temporário */}
+          <span className="text-lg font-semibold text-gray-700">
+            SiteCraftHero
+          </span>
+          {/* Seletor de páginas */}
           <Select
             value={currentPage}
             onValueChange={(value) => setCurrentPage(value)}
           >
             <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Selecione uma página" />
+              <SelectValue placeholder="Selecionar Página" />
             </SelectTrigger>
             <SelectContent>
               {pages.map((page) => (
