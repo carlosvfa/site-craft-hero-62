@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { FileText, Tool } from "lucide-react";
+import { FileText, Settings } from "lucide-react";
 
 export const Navbar = () => {
   return (
@@ -17,7 +17,7 @@ export const Navbar = () => {
               About
             </Button>
             <Button variant="ghost" className="text-gray-600 hover:text-primary">
-              <Tool className="h-4 w-4 mr-2" />
+              <Settings className="h-4 w-4 mr-2" />
               Tools
             </Button>
             <Button className="bg-primary hover:bg-primary-hover text-white">
