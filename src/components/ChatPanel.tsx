@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { createGithubRepository } from "@/integrations/github/client";
 
 interface Message {
   type: "ai" | "user";
@@ -20,7 +21,7 @@ export const ChatPanel = () => {
     const savedMessages = localStorage.getItem("chatMessages");
     return savedMessages ? JSON.parse(savedMessages) : [{
       type: "ai",
-      content: "Olá! Eu sou BOB, seu assistente de IA para criar aplicativos e sites. Diga-me o que você precisa, e eu cuidarei do resto!",
+      content: "Olá! Eu sou BOB, seu assistente de IA para criar aplicativos e sites. Posso ajudar você a criar e gerenciar repositórios no GitHub. Diga-me o que você precisa!",
       timestamp: Date.now()
     }];
   });
@@ -28,6 +29,27 @@ export const ChatPanel = () => {
   useEffect(() => {
     localStorage.setItem("chatMessages", JSON.stringify(mensagens));
   }, [mensagens]);
+
+  const handleCreateRepository = async (repoName: string, description?: string) => {
+    try {
+      await createGithubRepository({
+        name: repoName,
+        description: description,
+      });
+      
+      toast({
+        title: "Sucesso",
+        description: `Repositório ${repoName} criado com sucesso!`,
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível criar o repositório. Tente novamente.",
+        variant: "destructive",
+      });
+      console.error("Erro ao criar repositório:", error);
+    }
+  };
 
   const enviarMensagem = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,7 +79,7 @@ export const ChatPanel = () => {
           messages: [
             {
               role: "system",
-              content: "Você é BOB, um assistente de IA dedicado ao desenvolvimento de aplicativos e sites profissionais. Você ajuda os usuários fornecendo orientações claras, passo a passo, e explicações técnicas.",
+              content: "Você é BOB, um assistente de IA dedicado ao desenvolvimento de aplicativos e sites profissionais. Você pode criar e gerenciar repositórios no GitHub. Quando o usuário pedir para criar um repositório, extraia o nome e a descrição da mensagem e use a função handleCreateRepository.",
             },
             ...mensagens.map((msg) => ({
               role: msg.type === "user" ? "user" : "assistant",
@@ -74,6 +96,17 @@ export const ChatPanel = () => {
 
       const dados = await resposta.json();
       const respostaDaIA = dados.choices[0].message.content;
+
+      // Verifica se a mensagem contém um pedido para criar um repositório
+      if (mensagemDoUsuario.toLowerCase().includes("criar repositório") || 
+          mensagemDoUsuario.toLowerCase().includes("criar repo")) {
+        const repoName = mensagemDoUsuario.match(/repositório\s+([a-zA-Z0-9-_]+)/i)?.[1] ||
+                        mensagemDoUsuario.match(/repo\s+([a-zA-Z0-9-_]+)/i)?.[1];
+        
+        if (repoName) {
+          await handleCreateRepository(repoName);
+        }
+      }
 
       const novaMensagemIA = {
         type: "ai" as const,
@@ -166,4 +199,4 @@ export const ChatPanel = () => {
       </Tabs>
     </div>
   );
-};
+});
