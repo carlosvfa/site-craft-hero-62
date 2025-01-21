@@ -6,70 +6,70 @@ import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 
 interface Message {
-  type: "ai" | "user";
-  content: string;
+  type: "ai" | "user"; // Tipo da mensagem, pode ser "ai" (mensagem da IA) ou "user" (mensagem do usuário)
+  content: string; // Conteúdo da mensagem
 }
 
-export const ChatPanel = () => {
-  const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
-  const [messages, setMessages] = useState<Message[]>([
+export const PainelDeChat = () => {
+  const [entrada, setEntrada] = useState(""); // Estado para o input do usuário
+  const [estaCarregando, setEstaCarregando] = useState(false); // Estado de carregamento
+  const { toast } = useToast(); // Função para exibir notificações
+  const [mensagens, setMensagens] = useState<Message[]>([
     {
       type: "ai",
-      content: "Hi! I'm BOB, your AI assistant for building apps and websites. Tell me what you need, and I'll handle the rest!",
+      content: "Olá! Eu sou BOB, seu assistente de IA para criar aplicativos e sites. Diga-me o que você precisa, e eu cuidarei do resto!",
     },
   ]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const enviarMensagem = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || isLoading) return;
+    if (!entrada.trim() || estaCarregando) return;
 
-    const userMessage = input.trim();
-    setInput("");
-    setMessages((prev) => [...prev, { type: "user", content: userMessage }]);
-    setIsLoading(true);
+    const mensagemDoUsuario = entrada.trim();
+    setEntrada("");
+    setMensagens((prev) => [...prev, { type: "user", content: mensagemDoUsuario }]);
+    setEstaCarregando(true);
 
     try {
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      const resposta = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, // Chave da API obtida do .env
         },
         body: JSON.stringify({
           model: "gpt-4",
           messages: [
             {
               role: "system",
-              content: "You are BOB, an AI assistant dedicated to developing professional apps, websites, and other digital projects. You help users by providing clear, step-by-step guidance and technical explanations.",
+              content: "Você é BOB, um assistente de IA dedicado ao desenvolvimento de aplicativos e sites profissionais. Você ajuda os usuários fornecendo orientações claras, passo a passo, e explicações técnicas.",
             },
-            ...messages.map((msg) => ({
+            ...mensagens.map((msg) => ({
               role: msg.type === "user" ? "user" : "assistant",
               content: msg.content,
             })),
-            { role: "user", content: userMessage },
+            { role: "user", content: mensagemDoUsuario },
           ],
         }),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to get response from AI");
+      if (!resposta.ok) {
+        throw new Error("Falha ao obter resposta da IA");
       }
 
-      const data = await response.json();
-      const aiResponse = data.choices[0].message.content;
+      const dados = await resposta.json();
+      const respostaDaIA = dados.choices[0].message.content;
 
-      setMessages((prev) => [...prev, { type: "ai", content: aiResponse }]);
-    } catch (error) {
+      setMensagens((prev) => [...prev, { type: "ai", content: respostaDaIA }]);
+    } catch (erro) {
       toast({
-        title: "Error",
-        description: "Failed to get AI response. Please try again.",
+        title: "Erro",
+        description: "Não foi possível obter resposta da IA. Tente novamente.",
         variant: "destructive",
       });
-      console.error("AI response error:", error);
+      console.error("Erro na resposta da IA:", erro);
     } finally {
-      setIsLoading(false);
+      setEstaCarregando(false);
     }
   };
 
@@ -78,47 +78,47 @@ export const ChatPanel = () => {
       <Tabs defaultValue="chat" className="flex flex-col h-full">
         <TabsList className="justify-start border-b border-gray-200 px-4">
           <TabsTrigger value="chat">Chat</TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
+          <TabsTrigger value="history">Histórico</TabsTrigger>
         </TabsList>
         
         <TabsContent value="chat" className="flex-1 flex flex-col">
           <ScrollArea className="flex-1 p-4">
             <div className="space-y-4">
-              {messages.map((message, index) => (
+              {mensagens.map((mensagem, index) => (
                 <div
                   key={index}
                   className={`flex ${
-                    message.type === "user" ? "justify-end" : "justify-start"
+                    mensagem.type === "user" ? "justify-end" : "justify-start"
                   }`}
                 >
                   <div
                     className={`max-w-[80%] p-3 rounded-lg ${
-                      message.type === "user"
+                      mensagem.type === "user"
                         ? "bg-gray-900 text-white"
                         : "bg-gray-100 text-gray-900"
                     }`}
                   >
-                    {message.content}
+                    {mensagem.content}
                   </div>
                 </div>
               ))}
             </div>
           </ScrollArea>
 
-          <form onSubmit={handleSubmit} className="p-4 border-t border-gray-200">
+          <form onSubmit={enviarMensagem} className="p-4 border-t border-gray-200">
             <div className="flex space-x-2">
               <input
                 type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Type your message..."
+                value={entrada}
+                onChange={(e) => setEntrada(e.target.value)}
+                placeholder="Digite sua mensagem..."
                 className="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
-                disabled={isLoading}
+                disabled={estaCarregando}
               />
               <Button 
                 type="submit" 
                 className="bg-gray-900 hover:bg-gray-800"
-                disabled={isLoading}
+                disabled={estaCarregando}
               >
                 <Send className="h-4 w-4" />
               </Button>
@@ -128,7 +128,7 @@ export const ChatPanel = () => {
 
         <TabsContent value="history" className="flex-1 p-4">
           <div className="text-gray-500 text-center">
-            Your chat history will appear here
+            Seu histórico de chat aparecerá aqui
           </div>
         </TabsContent>
       </Tabs>
