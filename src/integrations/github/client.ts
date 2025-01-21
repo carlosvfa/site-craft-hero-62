@@ -35,8 +35,9 @@ export const createGithubRepository = async (params: CreateRepoParams) => {
 
     const repo = await response.json();
 
+    // Get the current user's ID
     const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError) throw new Error('Failed to get user');
+    if (userError || !user) throw new Error('Failed to get user');
 
     // Save repository info in Supabase with user_id
     const { error: dbError } = await supabase
