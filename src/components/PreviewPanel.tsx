@@ -1,11 +1,18 @@
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Smartphone, ArrowBigLeft, ArrowBigRight } from "lucide-react";
+import { RefreshCw, Smartphone } from "lucide-react";
 import { useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export const PreviewPanel = () => {
   const [isMobile, setIsMobile] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = 1; // This will be dynamic based on project pages
+  const [currentPage, setCurrentPage] = useState("index");
+  const pages = ["index", "about", "contact"]; // Exemplo de páginas
 
   return (
     <div className="h-full flex flex-col bg-white">
@@ -17,36 +24,30 @@ export const PreviewPanel = () => {
             onClick={() => setIsMobile(!isMobile)}
             className="text-gray-600"
           >
-            <Smartphone className="h-4 w-4" />
+            <Smartphone className="h-4 w-4 mr-2" />
             {isMobile ? "Desktop" : "Mobile"}
           </Button>
           <Button variant="ghost" size="sm" className="text-gray-600">
-            <RefreshCw className="h-4 w-4" />
+            <RefreshCw className="h-4 w-4 mr-2" />
             Reiniciar
           </Button>
         </div>
         <div className="flex items-center space-x-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-            className="text-gray-600"
+          <Select
+            value={currentPage}
+            onValueChange={(value) => setCurrentPage(value)}
           >
-            <ArrowBigLeft className="h-4 w-4" />
-          </Button>
-          <span className="text-sm text-gray-600">
-            Página {currentPage} de {totalPages}
-          </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-            className="text-gray-600"
-          >
-            <ArrowBigRight className="h-4 w-4" />
-          </Button>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Selecione uma página" />
+            </SelectTrigger>
+            <SelectContent>
+              {pages.map((page) => (
+                <SelectItem key={page} value={page}>
+                  preview--site-craft-hero.lovable.app/{page}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
       <div className={`flex-1 overflow-y-auto bg-gray-50 ${isMobile ? 'flex justify-center' : ''}`}>

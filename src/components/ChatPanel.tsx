@@ -31,11 +31,13 @@ export const ChatPanel = () => {
     setEstaCarregando(true);
 
     try {
+      const OPENAI_API_KEY = "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";
+      
       const resposta = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
           model: "gpt-4",
