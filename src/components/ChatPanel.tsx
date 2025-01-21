@@ -38,7 +38,7 @@ export const ChatPanel = () => {
           Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
-          model: "gpt-3.5-turbo-0125",
+          model: "gpt-4o-mini",
           messages: [
             {
               role: "system",
