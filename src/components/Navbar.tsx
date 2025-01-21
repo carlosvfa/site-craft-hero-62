@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Settings, Github, Cloud, Zap, Database } from "lucide-react";
+import { Settings, Github } from "lucide-react";
 
 export const Navbar = () => {
   return (
@@ -8,25 +8,13 @@ export const Navbar = () => {
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
             <span className="text-xl font-semibold text-gray-900">
-              Website Builder AI
+              Construtor de Sites AI
             </span>
           </div>
           <div className="flex items-center space-x-2">
             <Button variant="ghost" size="sm" className="text-gray-600">
-              <Database className="h-4 w-4" />
-              Supabase
-            </Button>
-            <Button variant="ghost" size="sm" className="text-gray-600">
               <Github className="h-4 w-4" />
               Github
-            </Button>
-            <Button variant="ghost" size="sm" className="text-gray-600">
-              <Zap className="h-4 w-4" />
-              Publish
-            </Button>
-            <Button variant="ghost" size="sm" className="text-gray-600">
-              <Cloud className="h-4 w-4" />
-              Deploy
             </Button>
             <Button variant="ghost" size="sm" className="text-gray-600">
               <Settings className="h-4 w-4" />
