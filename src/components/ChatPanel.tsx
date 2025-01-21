@@ -6,14 +6,14 @@ import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 
 interface Message {
-  type: "ai" | "user"; // Tipo da mensagem, pode ser "ai" (mensagem da IA) ou "user" (mensagem do usuário)
-  content: string; // Conteúdo da mensagem
+  type: "ai" | "user";
+  content: string;
 }
 
-export const PainelDeChat = () => {
-  const [entrada, setEntrada] = useState(""); // Estado para o input do usuário
-  const [estaCarregando, setEstaCarregando] = useState(false); // Estado de carregamento
-  const { toast } = useToast(); // Função para exibir notificações
+export const ChatPanel = () => {
+  const [entrada, setEntrada] = useState("");
+  const [estaCarregando, setEstaCarregando] = useState(false);
+  const { toast } = useToast();
   const [mensagens, setMensagens] = useState<Message[]>([
     {
       type: "ai",
@@ -35,7 +35,7 @@ export const PainelDeChat = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, // Chave da API obtida do .env
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
           model: "gpt-4",
