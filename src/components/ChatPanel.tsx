@@ -2,7 +2,7 @@ import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 
 interface Message {
@@ -14,12 +14,17 @@ export const ChatPanel = () => {
   const [entrada, setEntrada] = useState("");
   const [estaCarregando, setEstaCarregando] = useState(false);
   const { toast } = useToast();
-  const [mensagens, setMensagens] = useState<Message[]>([
-    {
+  const [mensagens, setMensagens] = useState<Message[]>(() => {
+    const savedMessages = localStorage.getItem("chatMessages");
+    return savedMessages ? JSON.parse(savedMessages) : [{
       type: "ai",
       content: "Olá! Eu sou BOB, seu assistente de IA para criar aplicativos e sites. Diga-me o que você precisa, e eu cuidarei do resto!",
-    },
-  ]);
+    }];
+  });
+
+  useEffect(() => {
+    localStorage.setItem("chatMessages", JSON.stringify(mensagens));
+  }, [mensagens]);
 
   const enviarMensagem = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,7 +43,7 @@ export const ChatPanel = () => {
           Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
-          model: "gpt-4o-mini",
+          model: "gpt-4o",
           messages: [
             {
               role: "system",
