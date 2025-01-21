@@ -35,7 +35,7 @@ export const ChatPanel = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`, // Atualizado para usar VITE_ prefix
+          Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`, // Certifique-se de que o VITE_OPENAI_API_KEY está configurado no .env
         },
         body: JSON.stringify({
           model: "gpt-4",
@@ -74,7 +74,7 @@ export const ChatPanel = () => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-white border-r border-gray-200">
+    <div className="flex flex-col h-full bg-gray-50 border-r border-gray-200">
       <Tabs defaultValue="chat" className="flex flex-col h-full">
         <TabsList className="justify-start border-b border-gray-200 px-4">
           <TabsTrigger value="chat">Chat</TabsTrigger>
@@ -94,9 +94,9 @@ export const ChatPanel = () => {
                   <div
                     className={`max-w-[80%] p-3 rounded-lg ${
                       mensagem.type === "user"
-                        ? "bg-gray-900 text-white"
-                        : "bg-gray-100 text-gray-900"
-                    }`}
+                        ? "bg-blue-500 text-white"
+                        : "bg-gray-200 text-gray-900"
+                    } shadow`}
                   >
                     {mensagem.content}
                   </div>
@@ -105,23 +105,27 @@ export const ChatPanel = () => {
             </div>
           </ScrollArea>
 
-          <form onSubmit={enviarMensagem} className="p-4 border-t border-gray-200">
+          <form onSubmit={enviarMensagem} className="p-4 border-t border-gray-200 bg-white">
             <div className="flex space-x-2">
               <input
                 type="text"
                 value={entrada}
                 onChange={(e) => setEntrada(e.target.value)}
                 placeholder="Digite sua mensagem..."
-                className="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
+                className="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 disabled={estaCarregando}
               />
-              <Button 
-                type="submit" 
-                className="bg-gray-900 hover:bg-gray-800"
+              <button
+                type="submit"
+                className={`flex items-center justify-center px-4 py-2 font-semibold text-white rounded-lg shadow ${
+                  estaCarregando
+                    ? "bg-blue-300 cursor-not-allowed"
+                    : "bg-blue-500 hover:bg-blue-600"
+                }`}
                 disabled={estaCarregando}
               >
-                <Send className="h-4 w-4" />
-              </Button>
+                <Send className="h-5 w-5" />
+              </button>
             </div>
           </form>
         </TabsContent>
