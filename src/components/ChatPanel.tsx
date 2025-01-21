@@ -4,8 +4,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { createGithubRepository } from "@/integrations/github/client";
+import { Octokit } from "@octokit/rest";
 
 interface Message {
   type: "ai" | "user";
@@ -19,35 +18,56 @@ export const ChatPanel = () => {
   const { toast } = useToast();
   const [mensagens, setMensagens] = useState<Message[]>(() => {
     const savedMessages = localStorage.getItem("chatMessages");
-    return savedMessages ? JSON.parse(savedMessages) : [{
-      type: "ai",
-      content: "Olá! Eu sou BOB, seu assistente de IA para criar aplicativos e sites. Posso ajudar você a criar e gerenciar repositórios no GitHub. Diga-me o que você precisa!",
-      timestamp: Date.now()
-    }];
+    return savedMessages
+      ? JSON.parse(savedMessages)
+      : [
+          {
+            type: "ai",
+            content:
+              "Olá! Eu sou BOB, seu assistente de IA para criar aplicativos e sites. Posso ajudar você a criar e gerenciar repositórios no GitHub. Diga-me o que você precisa!",
+            timestamp: Date.now(),
+          },
+        ];
   });
 
   useEffect(() => {
     localStorage.setItem("chatMessages", JSON.stringify(mensagens));
   }, [mensagens]);
 
-  const handleCreateRepository = async (repoName: string, description?: string) => {
+  const createGithubRepository = async (name: string, description?: string) => {
+    const octokit = new Octokit({
+      auth: import.meta.env.VITE_GITHUB_TOKEN, // Token do GitHub configurado no .env
+    });
+
     try {
-      await createGithubRepository({
-        name: repoName,
-        description: description,
+      const response = await octokit.repos.createForAuthenticatedUser({
+        name,
+        description: description || "Repositório criado pelo Construtor de Sites AI",
+        private: false, // Altere para true se quiser repositórios privados
       });
-      
+
       toast({
         title: "Sucesso",
-        description: `Repositório ${repoName} criado com sucesso!`,
+        description: `Repositório ${response.data.name} criado com sucesso! Link: ${response.data.html_url}`,
       });
+
+      return response.data;
     } catch (error) {
       toast({
         title: "Erro",
-        description: "Não foi possível criar o repositório. Tente novamente.",
+        description: "Não foi possível criar o repositório. Verifique suas configurações e tente novamente.",
         variant: "destructive",
       });
       console.error("Erro ao criar repositório:", error);
+      throw error;
+    }
+  };
+
+  const handleCreateRepository = async (repoName: string, description?: string) => {
+    try {
+      await createGithubRepository(repoName, description);
+    } catch (error) {
+      console.error("Erro no handleCreateRepository:", error);
     }
   };
 
@@ -57,13 +77,13 @@ export const ChatPanel = () => {
 
     const mensagemDoUsuario = entrada.trim();
     setEntrada("");
-    
+
     const novaMensagemUsuario = {
       type: "user" as const,
       content: mensagemDoUsuario,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
-    
+
     setMensagens((prev) => [...prev, novaMensagemUsuario]);
     setEstaCarregando(true);
 
@@ -79,7 +99,8 @@ export const ChatPanel = () => {
           messages: [
             {
               role: "system",
-              content: "Você é BOB, um assistente de IA dedicado ao desenvolvimento de aplicativos e sites profissionais. Você pode criar e gerenciar repositórios no GitHub. Quando o usuário pedir para criar um repositório, extraia o nome e a descrição da mensagem e use a função handleCreateRepository.",
+              content:
+                "Você é BOB, um assistente de IA dedicado ao desenvolvimento de aplicativos e sites profissionais. Você pode criar e gerenciar repositórios no GitHub. Quando o usuário pedir para criar um repositório, extraia o nome e a descrição da mensagem e use a função handleCreateRepository.",
             },
             ...mensagens.map((msg) => ({
               role: msg.type === "user" ? "user" : "assistant",
@@ -98,20 +119,32 @@ export const ChatPanel = () => {
       const respostaDaIA = dados.choices[0].message.content;
 
       // Verifica se a mensagem contém um pedido para criar um repositório
-      if (mensagemDoUsuario.toLowerCase().includes("criar repositório") || 
-          mensagemDoUsuario.toLowerCase().includes("criar repo")) {
+      if (
+        mensagemDoUsuario.toLowerCase().includes("criar repositório") ||
+        mensagemDoUsuario.toLowerCase().includes("criar repo")
+      ) {
         const repoName = mensagemDoUsuario.match(/repositório\s+([a-zA-Z0-9-_]+)/i)?.[1] ||
                         mensagemDoUsuario.match(/repo\s+([a-zA-Z0-9-_]+)/i)?.[1];
-        
+        const repoDescription = mensagemDoUsuario.match(/descrição\s+(.+)/i)?.[1];
+
         if (repoName) {
-          await handleCreateRepository(repoName);
+          await handleCreateRepository(repoName, repoDescription);
+        } else {
+          setMensagens((prev) => [
+            ...prev,
+            {
+              type: "ai",
+              content: "Por favor, forneça um nome válido para o repositório.",
+              timestamp: Date.now(),
+            },
+          ]);
         }
       }
 
       const novaMensagemIA = {
         type: "ai" as const,
         content: respostaDaIA,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
 
       setMensagens((prev) => [...prev, novaMensagemIA]);
@@ -134,7 +167,7 @@ export const ChatPanel = () => {
           <TabsTrigger value="chat">Chat</TabsTrigger>
           <TabsTrigger value="history">Histórico</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="chat" className="flex-1 flex flex-col">
           <ScrollArea className="flex-1 p-4">
             <div className="space-y-4">
@@ -154,9 +187,13 @@ export const ChatPanel = () => {
                   >
                     <div>{mensagem.content}</div>
                     {mensagem.timestamp && (
-                      <div className={`text-xs mt-1 ${
-                        mensagem.type === "user" ? "text-gray-300" : "text-gray-500"
-                      }`}>
+                      <div
+                        className={`text-xs mt-1 ${
+                          mensagem.type === "user"
+                            ? "text-gray-300"
+                            : "text-gray-500"
+                        }`}
+                      >
                         {new Date(mensagem.timestamp).toLocaleTimeString()}
                       </div>
                     )}
