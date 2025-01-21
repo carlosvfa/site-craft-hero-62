@@ -4,10 +4,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Message {
   type: "ai" | "user";
   content: string;
+  timestamp?: number;
 }
 
 export const ChatPanel = () => {
@@ -19,6 +21,7 @@ export const ChatPanel = () => {
     return savedMessages ? JSON.parse(savedMessages) : [{
       type: "ai",
       content: "Olá! Eu sou BOB, seu assistente de IA para criar aplicativos e sites. Diga-me o que você precisa, e eu cuidarei do resto!",
+      timestamp: Date.now()
     }];
   });
 
@@ -32,7 +35,14 @@ export const ChatPanel = () => {
 
     const mensagemDoUsuario = entrada.trim();
     setEntrada("");
-    setMensagens((prev) => [...prev, { type: "user", content: mensagemDoUsuario }]);
+    
+    const novaMensagemUsuario = {
+      type: "user" as const,
+      content: mensagemDoUsuario,
+      timestamp: Date.now()
+    };
+    
+    setMensagens((prev) => [...prev, novaMensagemUsuario]);
     setEstaCarregando(true);
 
     try {
@@ -43,7 +53,7 @@ export const ChatPanel = () => {
           Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
-          model: "gpt-4o",
+          model: "gpt-4",
           messages: [
             {
               role: "system",
@@ -65,7 +75,13 @@ export const ChatPanel = () => {
       const dados = await resposta.json();
       const respostaDaIA = dados.choices[0].message.content;
 
-      setMensagens((prev) => [...prev, { type: "ai", content: respostaDaIA }]);
+      const novaMensagemIA = {
+        type: "ai" as const,
+        content: respostaDaIA,
+        timestamp: Date.now()
+      };
+
+      setMensagens((prev) => [...prev, novaMensagemIA]);
     } catch (erro) {
       toast({
         title: "Erro",
@@ -103,7 +119,14 @@ export const ChatPanel = () => {
                         : "bg-gray-200 text-gray-900"
                     } shadow`}
                   >
-                    {mensagem.content}
+                    <div>{mensagem.content}</div>
+                    {mensagem.timestamp && (
+                      <div className={`text-xs mt-1 ${
+                        mensagem.type === "user" ? "text-gray-300" : "text-gray-500"
+                      }`}>
+                        {new Date(mensagem.timestamp).toLocaleTimeString()}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
