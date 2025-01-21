@@ -199,4 +199,4 @@ export const ChatPanel = () => {
       </Tabs>
     </div>
   );
-});
+};
