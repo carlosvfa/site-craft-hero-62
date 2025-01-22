@@ -4,7 +4,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import { Octokit } from "@octokit/rest";
+import { createGithubRepository } from "@/integrations/github/client";
 
 interface Message {
   type: "ai" | "user";
@@ -34,47 +34,23 @@ export const ChatPanel = () => {
     localStorage.setItem("chatMessages", JSON.stringify(mensagens));
   }, [mensagens]);
 
-  const createGithubRepository = async (name: string, description?: string) => {
-    const octokit = new Octokit({
-      auth: import.meta.env.VITE_GITHUB_TOKEN, // Certifique-se de que o token está configurado no .env
-    });
-
-    try {
-      const response = await octokit.repos.createForAuthenticatedUser({
-        name,
-        description: description || "Repositório criado pelo Construtor de Sites AI",
-        private: false, // Defina como true se quiser repositórios privados
-      });
-
-      toast({
-        title: "Sucesso",
-        description: `Repositório ${response.data.name} criado com sucesso! Link: ${response.data.html_url}`,
-      });
-
-      return response.data;
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível criar o repositório. Verifique suas configurações e tente novamente.",
-        variant: "destructive",
-      });
-      console.error("Erro ao criar repositório:", error);
-      throw error;
-    }
-  };
-
   const handleCreateRepository = async (repoName: string, description?: string) => {
     try {
-      await createGithubRepository(repoName, description);
+      await createGithubRepository({
+        name: repoName,
+        description: description || "Repositório criado pelo Construtor de Sites AI",
+      });
+      
       setMensagens((prev) => [
         ...prev,
         {
           type: "ai",
-          content: `Pronto! O repositório "${repoName}" foi criado com sucesso no GitHub com a descrição: "${description || "Sem descrição"}".`,
+          content: `Pronto! O repositório "${repoName}" foi criado com sucesso!`,
           timestamp: Date.now(),
         },
       ]);
     } catch (error) {
+      console.error("Erro no handleCreateRepository:", error);
       setMensagens((prev) => [
         ...prev,
         {
