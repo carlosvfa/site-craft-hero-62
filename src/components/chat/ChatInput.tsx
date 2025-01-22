@@ -9,7 +9,7 @@ interface ChatInputProps {
 
 export const ChatInput = ({ value, onChange, onSubmit, isLoading }: ChatInputProps) => {
   return (
-    <form onSubmit={onSubmit} className="p-4 border-t border-gray-200 bg-white">
+    <form onSubmit={onSubmit} className="flex-shrink-0 p-4 border-t border-gray-200 bg-white">
       <div className="flex space-x-2">
         <input
           type="text"

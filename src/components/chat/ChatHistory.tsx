@@ -8,8 +8,8 @@ interface ChatHistoryProps {
 
 export const ChatHistory = ({ messages }: ChatHistoryProps) => {
   return (
-    <ScrollArea className="flex-1 p-4">
-      <div className="space-y-4">
+    <ScrollArea className="flex-1 px-4">
+      <div className="py-4 space-y-4">
         {messages.map((message, index) => (
           <ChatMessage key={index} message={message} />
         ))}

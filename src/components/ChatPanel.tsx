@@ -134,14 +134,16 @@ export const ChatPanel = () => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 border-r border-gray-200">
+    <div className="flex flex-col h-[calc(100vh-4rem)] bg-gray-50 border-r border-gray-200">
       <Tabs defaultValue="chat" className="flex flex-col h-full">
-        <TabsList className="justify-start border-b border-gray-200 px-4">
-          <TabsTrigger value="chat">Chat</TabsTrigger>
-          <TabsTrigger value="history">Histórico</TabsTrigger>
-        </TabsList>
+        <div className="flex-shrink-0 border-b border-gray-200">
+          <TabsList className="justify-start px-4">
+            <TabsTrigger value="chat">Chat</TabsTrigger>
+            <TabsTrigger value="history">Histórico</TabsTrigger>
+          </TabsList>
+        </div>
 
-        <TabsContent value="chat" className="flex-1 flex flex-col">
+        <TabsContent value="chat" className="flex-1 flex flex-col overflow-hidden">
           <ChatHistory messages={mensagens} />
           <ChatInput
             value={entrada}
