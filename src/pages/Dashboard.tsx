@@ -18,9 +18,16 @@ export default function Dashboard() {
 
   const fetchProjects = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        navigate('/auth');
+        return;
+      }
+
       const { data: projects, error } = await supabase
         .from("projects")
         .select("*")
+        .eq('owner_id', user.id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -38,9 +45,16 @@ export default function Dashboard() {
 
   const handleCreateProject = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        navigate('/auth');
+        return;
+      }
+
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("can_create_projects")
+        .eq('id', user.id)
         .single();
 
       if (profileError) throw profileError;
@@ -57,7 +71,7 @@ export default function Dashboard() {
       const name = `Projeto ${projects.length + 1}`;
       const { data: project, error } = await supabase
         .from("projects")
-        .insert([{ name }])
+        .insert([{ name, owner_id: user.id }])
         .select()
         .single();
 
