@@ -4,7 +4,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import { createGithubRepository } from "@/integrations/github/client";
+import { Octokit } from "@octokit/rest";
 
 interface Message {
   type: "ai" | "user";
@@ -34,31 +34,40 @@ export const ChatPanel = () => {
     localStorage.setItem("chatMessages", JSON.stringify(mensagens));
   }, [mensagens]);
 
+  const createGithubRepository = async (name: string, description?: string) => {
+    const octokit = new Octokit({
+      auth: import.meta.env.VITE_GITHUB_TOKEN,
+    });
+
+    try {
+      const response = await octokit.repos.createForAuthenticatedUser({
+        name,
+        description: description || "Repositório criado pelo Construtor de Sites AI",
+        private: false,
+      });
+
+      toast({
+        title: "Sucesso",
+        description: `Repositório ${response.data.name} criado com sucesso! Link: ${response.data.html_url}`,
+      });
+
+      return response.data;
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível criar o repositório. Verifique suas configurações e tente novamente.",
+        variant: "destructive",
+      });
+      console.error("Erro ao criar repositório:", error);
+      throw error;
+    }
+  };
+
   const handleCreateRepository = async (repoName: string, description?: string) => {
     try {
-      await createGithubRepository({
-        name: repoName,
-        description: description || "Repositório criado pelo Construtor de Sites AI",
-      });
-      
-      setMensagens((prev) => [
-        ...prev,
-        {
-          type: "ai",
-          content: `Pronto! O repositório "${repoName}" foi criado com sucesso!`,
-          timestamp: Date.now(),
-        },
-      ]);
+      await createGithubRepository(repoName, description);
     } catch (error) {
       console.error("Erro no handleCreateRepository:", error);
-      setMensagens((prev) => [
-        ...prev,
-        {
-          type: "ai",
-          content: "Houve um problema ao tentar criar o repositório. Verifique as configurações e tente novamente.",
-          timestamp: Date.now(),
-        },
-      ]);
     }
   };
 
@@ -79,13 +88,43 @@ export const ChatPanel = () => {
     setEstaCarregando(true);
 
     try {
-      // Verifica se o usuário pediu para criar um repositório
+      const resposta = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "gpt-4",
+          messages: [
+            {
+              role: "system",
+              content:
+                "Você é BOB, um assistente de IA dedicado ao desenvolvimento de aplicativos e sites profissionais. Você pode criar e gerenciar repositórios no GitHub. Quando o usuário pedir para criar um repositório, extraia o nome e a descrição da mensagem e use a função handleCreateRepository.",
+            },
+            ...mensagens.map((msg) => ({
+              role: msg.type === "user" ? "user" : "assistant",
+              content: msg.content,
+            })),
+            { role: "user", content: mensagemDoUsuario },
+          ],
+        }),
+      });
+
+      if (!resposta.ok) {
+        throw new Error("Falha ao obter resposta da IA");
+      }
+
+      const dados = await resposta.json();
+      const respostaDaIA = dados.choices[0].message.content;
+
+      // Verifica se a mensagem contém um pedido para criar um repositório
       if (
         mensagemDoUsuario.toLowerCase().includes("criar repositório") ||
         mensagemDoUsuario.toLowerCase().includes("criar repo")
       ) {
         const repoName = mensagemDoUsuario.match(/repositório\s+([a-zA-Z0-9-_]+)/i)?.[1] ||
-                        mensagemDoUsuario.match(/repo\s+([a-zA-Z0-9-_]+)/i)?.[1];
+                         mensagemDoUsuario.match(/repo\s+([a-zA-Z0-9-_]+)/i)?.[1];
         const repoDescription = mensagemDoUsuario.match(/descrição\s+(.+)/i)?.[1];
 
         if (repoName) {
@@ -100,46 +139,15 @@ export const ChatPanel = () => {
             },
           ]);
         }
-      } else {
-        // Envia para o OpenAI para outras interações
-        const resposta = await fetch("https://api.openai.com/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
-          },
-          body: JSON.stringify({
-            model: "gpt-4",
-            messages: [
-              {
-                role: "system",
-                content:
-                  "Você é BOB, um assistente de IA dedicado ao desenvolvimento de aplicativos e sites profissionais. Você pode criar e gerenciar repositórios no GitHub. Quando o usuário pedir para criar um repositório, extraia o nome e a descrição da mensagem e use a função handleCreateRepository.",
-              },
-              ...mensagens.map((msg) => ({
-                role: msg.type === "user" ? "user" : "assistant",
-                content: msg.content,
-              })),
-              { role: "user", content: mensagemDoUsuario },
-            ],
-          }),
-        });
-
-        if (!resposta.ok) {
-          throw new Error("Falha ao obter resposta da IA");
-        }
-
-        const dados = await resposta.json();
-        const respostaDaIA = dados.choices[0].message.content;
-
-        const novaMensagemIA = {
-          type: "ai" as const,
-          content: respostaDaIA,
-          timestamp: Date.now(),
-        };
-
-        setMensagens((prev) => [...prev, novaMensagemIA]);
       }
+
+      const novaMensagemIA = {
+        type: "ai" as const,
+        content: respostaDaIA,
+        timestamp: Date.now(),
+      };
+
+      setMensagens((prev) => [...prev, novaMensagemIA]);
     } catch (erro) {
       toast({
         title: "Erro",
